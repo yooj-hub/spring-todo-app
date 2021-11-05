@@ -2,6 +2,7 @@ package study.todo.app.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import study.todo.app.domain.TodoEntity;
 import study.todo.app.service.TodoService;
@@ -29,16 +30,25 @@ public class TodoController {
                 .data(list).build());
     }
 
+    @GetMapping
+    public ResponseEntity<?> retrieveTodoList(@AuthenticationPrincipal String userId) {
+
+        List<TodoEntity> entities = service.retrieve(userId);
+
+        List<TodoDto> dtos = entities.stream().map(TodoDto::new).collect(toList());
+        ResponseDto<TodoDto> response = ResponseDto.<TodoDto>builder().data(dtos).build();
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
-    public ResponseEntity<?> createTodo(@RequestBody TodoDto dto) {
+    public ResponseEntity<?> createTodo(@AuthenticationPrincipal String userId, @RequestBody TodoDto dto) {
         try {
-            String temporaryUserId = "temporary-user";
 
             TodoEntity entity = TodoDto.toEntity(dto);
 
             entity.setId(null);
 
-            entity.setUserId(temporaryUserId);
+            entity.setUserId(userId);
 
             List<TodoEntity> entities = service.create(entity);
 
@@ -53,11 +63,11 @@ public class TodoController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateTodo(@RequestBody TodoDto dto) {
-        String temporaryUserId = "temporary-user";
+    public ResponseEntity<?> updateTodo(@AuthenticationPrincipal String userId, @RequestBody TodoDto dto) {
 
         TodoEntity entity = TodoDto.toEntity(dto);
-        entity.setUserId(temporaryUserId);
+
+        entity.setUserId(userId);
 
         List<TodoEntity> entities = service.update(entity);
 
@@ -67,11 +77,10 @@ public class TodoController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteTodo(@RequestBody TodoDto dto) {
+    public ResponseEntity<?> deleteTodo(@AuthenticationPrincipal String userId, @RequestBody TodoDto dto) {
         try {
-            String temporaryUserId = "temporary-user";
             TodoEntity entity = TodoDto.toEntity(dto);
-            entity.setUserId(temporaryUserId);
+            entity.setUserId(userId);
             List<TodoEntity> entities = service.delete(entity);
             List<TodoDto> dtos = entities.stream().map(TodoDto::new).collect(toList());
             ResponseDto<TodoDto> response = ResponseDto.<TodoDto>builder().data(dtos).build();

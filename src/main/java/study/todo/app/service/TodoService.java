@@ -73,7 +73,7 @@ public class TodoService {
         }
     }
 
-    private List<TodoEntity> retrieve(String userId) {
+    public List<TodoEntity> retrieve(String userId) {
         return repository.findByUserId(userId);
     }
 
